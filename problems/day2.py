@@ -1,6 +1,9 @@
 import re
 from typing import NamedTuple
 
+from .utils import parse_lines_regex
+
+
 class Row(NamedTuple):
     lowerBound: int
     upperBound: int
@@ -9,15 +12,17 @@ class Row(NamedTuple):
 
 LINE_RE = re.compile(r'(\d+)-(\d+) (\w): (\w+)')
 
+
+def construct_row(m: re.Match):
+    return Row(lowerBound=int(m.group(1)), 
+               upperBound=int(m.group(2)), 
+               requiredChar=m.group(3), 
+               password=m.group(4))
+
+
 def parse_input(lines):
-    rows = []
-    for line in lines:
-        m = LINE_RE.match(line.strip())
-        if not m:
-            raise ValueError(f'Failed to match {line}')
-        rows.append(Row(lowerBound=int(m.group(1)), upperBound=int(m.group(2)), requiredChar=m.group(3), password=m.group(4)))
-        
-    return rows
+    return parse_lines_regex(lines, LINE_RE, construct_row)
+
 
 def is_password_valid_pt1(row: Row):
     count = row.password.count(row.requiredChar)

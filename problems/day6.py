@@ -1,17 +1,15 @@
 from functools import reduce
 from typing import List, Set
 
+from .utils import parse_paragraphs
+
+
+def parse_line_func(line):
+    return {c for c in line.strip()}
+
+
 def parse_input(lines):
-    groups = []
-    cur_group = []
-    for line in lines:
-        if line.strip() == '':
-            groups.append(cur_group)
-            cur_group = []
-        else:
-            cur_group.append({c for c in line.strip()})
-    groups.append(cur_group)
-    return groups
+    return parse_paragraphs(lines, parse_line_func)
 
 
 def part1(groups: List[Set[str]]):

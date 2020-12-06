@@ -1,22 +1,23 @@
 import re
 from typing import List, Optional, NamedTuple
 
+from .utils import parse_paragraphs
+
 
 def extract_fields(fields: List[str]):
     return {f: v for f,v in [(s.split(':')[0], s.split(':')[1]) for s in fields]}
 
 
+def parse_line(line: str) -> List[str]:
+    return line.strip().split(' ')
+
+
+def parse_par(par: List[List[str]]):
+    return extract_fields(field for line in par for field in line)
+
+
 def parse_input(lines: List[str]):
-    document_sections = []
-    cur_document = []
-    for line in lines:
-        if line.strip() == '':
-            document_sections.append(cur_document)
-            cur_document = []
-        else:
-            cur_document.extend(line.strip().split(' '))
-    document_sections.append(cur_document)
-    return [extract_fields(d) for d in document_sections]
+    return parse_paragraphs(lines, parse_line, parse_par)
 
 
 def is_doc_valid_pt1(doc):
