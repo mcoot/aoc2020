@@ -14,7 +14,6 @@ def chinese_remainder(bus_ids_with_offsets):
     return s % prod
  
  
- 
 def mul_inv(a, b):
     b0 = b
     x0, x1 = 0, 1
