@@ -96,32 +96,33 @@ def is_column_possible_for_field(field: FieldDef, col: int, tickets: List[List[i
 def determine_field_mappings(field_defs: Dict[str, FieldDef], tickets: List[List[int]]) -> Dict[str, int]:
     result = dict()
     remaining_fields = field_defs.copy()
-    possible_mappings = {f: list(range(len(tickets[0]))) for f in field_defs.keys()}
+    possible_mappings = {f: set(range(len(tickets[0]))) for f in field_defs.keys()}
 
+    # Eliminate mappings that are categorically impossible
     for field in field_defs.values():
-        possible_resulting_mappings = possible_mappings[field.name]
+        possible_resulting_mappings = possible_mappings[field.name].copy()
         for possible_col in possible_mappings[field.name]:
             if not is_column_possible_for_field(field, possible_col, tickets):
                 possible_resulting_mappings.remove(possible_col)
         possible_mappings[field.name] = possible_resulting_mappings
-
-    print({f: len(m) for f, m in possible_mappings.items()})
-
-    # for col in range(len(tickets[0])):
-    #     # Find the field that can hold all values across tickets in this column
-    #     for field in remaining_fields.values():
-    #         does_fit = True
-    #         for ticket in tickets:
-    #             if not does_value_fit_field(field, ticket[col]):
-    #                 does_fit = False
-    #                 break
-    #         if does_fit:
-    #             # fitting = [t[col] for t in tickets]
-    #             # print(f'Found {field.name}->{col} because of {fitting}')
-    #             result[field.name] = col
-    #             del remaining_fields[field.name]
-    #             break
-    return result
+    
+    # Constraint of the input is that there _will_ be exactly one field to start with that we can finalise immediately
+    final_mappings = dict()
+    while True:
+        # There should be something we can choose for sure (input constraint)
+        keys_with_one_option = [k for k, v in possible_mappings.items() if len(v) == 1]
+        if len(keys_with_one_option) == 0:
+            raise ValueError(f'Cannot eliminate: {possible_mappings}')
+        current = keys_with_one_option[0]
+        # Finalise that mapping
+        final_mappings[current] = list(possible_mappings[current])[0]
+        del possible_mappings[current]
+        if len(possible_mappings) == 0:
+            break
+        # Remove our chosen mapping from other possible mappings
+        for v in possible_mappings.values():
+            v.remove(final_mappings[current])
+    return final_mappings
 
 
 def apply_mapping(mapping: Dict[str, int], ticket: List[int]) -> Dict[str, int]:
@@ -131,9 +132,7 @@ def apply_mapping(mapping: Dict[str, int], ticket: List[int]) -> Dict[str, int]:
 def part2(data: Data):
     valid_tickets = get_valid_tickets(data)
     mapping = determine_field_mappings(data.field_defs, valid_tickets)
-    print(len(mapping))
     decoded_ticket = apply_mapping(mapping, data.my_ticket)
-    print(decoded_ticket)
     departure_fields = {f: v for f, v in decoded_ticket.items() if f.startswith('departure')}
     return reduce(lambda a, b: a * b, departure_fields.values())
     
