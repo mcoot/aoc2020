@@ -42,7 +42,6 @@ def find_allergen_mappings(recipes: List[Recipe]) -> Dict[str, Set[str]]:
 
 def part1(recipes: List[Recipe]) -> int:
     allergen_mapping = find_allergen_mappings(recipes)
-    print(allergen_mapping)
     possibly_allergen_ingredients = {v for s in allergen_mapping.values() for v in s}
     non_allergen_count = 0
     for recipe in recipes:
@@ -50,5 +49,31 @@ def part1(recipes: List[Recipe]) -> int:
     return non_allergen_count
 
 
-def part2(data: List[Recipe]) -> int:
-    pass
+def deduce_allergens(possible_mapping: Dict[str, Set[str]]) -> Dict[str, str]:
+    final_mapping = dict()
+    while len(possible_mapping) > 0:
+        found_allergen = None
+        # There should be at least one allergen with just one possibility
+        for allergen, possibilities in possible_mapping.items():
+            if len(possibilities) == 1:
+                found_allergen = allergen
+                final_mapping[allergen] = list(possibilities)[0]
+                break
+        del possible_mapping[found_allergen]
+        for possibilities in possible_mapping.values():
+            possibilities.discard(final_mapping[found_allergen])
+    return final_mapping
+
+
+def build_part2_result(final_mapping: Dict[str, str]) -> str:
+    alphabetical = sorted(list(final_mapping.keys()))
+    ingredients = []
+    for a in alphabetical:
+        ingredients.append(final_mapping[a])
+    return ','.join(ingredients)
+
+
+def part2(recipes: List[Recipe]) -> str:
+    allergen_mapping = find_allergen_mappings(recipes)
+    final_mapping = deduce_allergens(allergen_mapping)
+    return build_part2_result(final_mapping)
