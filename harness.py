@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+from copy import deepcopy
 from glob import glob
 from importlib import import_module
 from prettytable import PrettyTable
-import sys
 import timeit
+from typing import List
 
 
 def run_part(mod, part_num: int, input_data):
@@ -17,20 +18,20 @@ def run_part(mod, part_num: int, input_data):
     return (part_name, result, time_taken)
 
 
-def run(input_file: str):
+def run(input_file: str, parts: List[int]):
     with open(input_file, 'r') as f:
         base_input = f.readlines()
 
     parsed_input = mod.parse_input(base_input)
-    
-    sys.stdout.write('Executing part 1... ')
-    part1 = run_part(mod, 1, parsed_input)
-    print('[Done]')
-    sys.stdout.write('Executing part 2... ')
-    part2 = run_part(mod, 2, parsed_input)
-    print('[Done]')
 
-    return [part1, part2]
+    results = []
+    for part in parts:
+        part_input = deepcopy(parsed_input)
+        print(f'Executing part {part}... ')
+        results.append(run_part(mod, part, part_input))
+        print('[Done]')
+
+    return results
 
 
 def print_results(results):
@@ -45,6 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('problem', type=str, help='the problem to run')
     parser.add_argument('-t', '--test', action='store_true', help='run the test inputs')
     parser.add_argument('-i', '--input', type=str, nargs='+', help='manually specify the input file(s) to run with')
+    parser.add_argument('-p', '--part', type=int, nargs='+', help='run only the specified part(s) of the problem')
     args = parser.parse_args()
 
     mod = import_module(f'problems.{args.problem}')
@@ -57,8 +59,14 @@ if __name__ == '__main__':
     else:
         inputs = [f'inputs/{args.problem}.in']
 
+    parts = []
+    if args.part:
+        parts = args.part
+    else:
+        parts = [1, 2]
+
     for i in inputs:
         print(f'Running with input {i}:')
-        results = run(i)
+        results = run(i, parts)
         print_results(results)
     
