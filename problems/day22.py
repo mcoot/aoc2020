@@ -7,6 +7,9 @@ class Hands:
     player1: List[int]
     player2: List[int]
 
+    def __hash__(self) -> int:
+        return 7 * tuple(self.player1).__hash__() + 31 * tuple(self.player2).__hash__()
+
     def draw(self) -> Tuple[int, int]:
         return (self.player1.pop(0), self.player2.pop(0))
 
@@ -17,7 +20,7 @@ class Hands:
         return self.player1 if player_idx == 0 else self.player2
 
     def copy(self):
-        return Hands(self.player1.copy(), self.player2.copy())
+        return Hands([c for c in self.player1], [c for c in self.player2])
 
 
 def parse_input(lines: List[str]) -> Hands:
@@ -54,20 +57,20 @@ def part1(starting_hands: Hands) -> int:
 
 
 def play_pt2_game(hands: Hands, depth: int = 0) -> Tuple[int, Hands]:
-    prev_hands = []
+    prev_hands = set()
     while len(hands.player1) > 0 and len(hands.player2) > 0:
         # Infinite game break
         if hands in prev_hands:
             # Player 1 wins
-            print(f'i{depth}  {hands.player1} {hands.player2}')
             return 0, hands
-        prev_hands.append(hands)
+        prev_hands.add(hands.copy())
         hands = hands.copy()
 
         p1card, p2card = hands.draw()
         if len(hands.player1) >= p1card and len(hands.player2) >= p2card:
             # Recursive round
-            round_winner, _ = play_pt2_game(Hands(hands.player1[:p1card], hands.player2[:p2card]), depth + 1)
+            rec_hands = Hands([c for c in hands.player1[:p1card]], [c for c in hands.player2[:p2card]])
+            round_winner, _ = play_pt2_game(rec_hands, depth + 1)
             used_cards = [p1card, p2card] if round_winner == 0 else [p2card, p1card]
             hands.put_cards(round_winner, used_cards)
         else:
@@ -78,7 +81,6 @@ def play_pt2_game(hands: Hands, depth: int = 0) -> Tuple[int, Hands]:
                 hands.put_cards(1, [p2card, p1card])
     
     winner_index = 0 if len(hands.player1) > 0 else 1
-    print(f'n{depth}  {hands.player1} {hands.player2}')
     return winner_index, hands
 
 
